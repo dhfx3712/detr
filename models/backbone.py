@@ -70,12 +70,14 @@ class BackboneBase(nn.Module):
         self.num_channels = num_channels
 
     def forward(self, tensor_list: NestedTensor):
-        xs = self.body(tensor_list.tensors)
-        out: Dict[str, NestedTensor] = {}
+        xs = self.body(tensor_list.tensors) #body返回字典layer
+        out: Dict[str, NestedTensor] = {} #返回字典，类型是str:NestedTensor结构
         for name, x in xs.items():
             m = tensor_list.mask
+            print(f'backbone : m-{m.shape} ,x-{x.shape}, name-{name} , m-None-{m[None].shape}')
             assert m is not None
-            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]
+            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0] #None增加batch维度,[0]返回结果去掉batch维度
+            print (f'backbone : mask-{mask.shape}')
             out[name] = NestedTensor(x, mask)
         return out
 
@@ -99,7 +101,7 @@ class Joiner(nn.Sequential):
 
     def forward(self, tensor_list: NestedTensor):
         xs = self[0](tensor_list)
-        out: List[NestedTensor] = []
+        out: List[NestedTensor] = [] #返回list 内部是NestedTensor结构
         pos = []
         for name, x in xs.items():
             out.append(x)
@@ -112,8 +114,8 @@ class Joiner(nn.Sequential):
 def build_backbone(args):
     position_embedding = build_position_encoding(args)
     train_backbone = args.lr_backbone > 0
-    return_interm_layers = args.masks
+    return_interm_layers = args.masks #分割 true 其他flase
     backbone = Backbone(args.backbone, train_backbone, return_interm_layers, args.dilation)
-    model = Joiner(backbone, position_embedding)
+    model = Joiner(backbone, position_embedding) #Joiner实例，返回实例对象model
     model.num_channels = backbone.num_channels
     return model

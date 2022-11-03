@@ -23,11 +23,11 @@ class DETR(nn.Module):
     def __init__(self, backbone, transformer, num_classes, num_queries, aux_loss=False):
         """ Initializes the model.
         Parameters:
-            backbone: torch module of the backbone to be used. See backbone.py
-            transformer: torch module of the transformer architecture. See transformer.py
+            backbone: torch module of the backbone to be used. See backbone.py argparse中找
+            transformer: torch module of the transformer architecture. See transformer.py argparse
             num_classes: number of object classes
             num_queries: number of object queries, ie detection slot. This is the maximal number of objects
-                         DETR can detect in a single image. For COCO, we recommend 100 queries.
+                         DETR can detect in a single image. For COCO, we recommend 100 queries. 一个图可以检测的个数
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
         """
         super().__init__()
@@ -36,7 +36,7 @@ class DETR(nn.Module):
         hidden_dim = transformer.d_model
         self.class_embed = nn.Linear(hidden_dim, num_classes + 1)
         self.bbox_embed = MLP(hidden_dim, hidden_dim, 4, 3)
-        self.query_embed = nn.Embedding(num_queries, hidden_dim)
+        self.query_embed = nn.Embedding(num_queries, hidden_dim) #为什么加query_embed?
         self.input_proj = nn.Conv2d(backbone.num_channels, hidden_dim, kernel_size=1)
         self.backbone = backbone
         self.aux_loss = aux_loss
@@ -56,16 +56,17 @@ class DETR(nn.Module):
                - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
                                 dictionnaries containing the two above keys for each decoder layer.
         """
-        if isinstance(samples, (list, torch.Tensor)):
+        if isinstance(samples, (list, torch.Tensor)): #元组中任何一个触发
             samples = nested_tensor_from_tensor_list(samples)
-        features, pos = self.backbone(samples)
+        features, pos = self.backbone(samples)#backbone的joiner类forward输出
 
         src, mask = features[-1].decompose()
+        print (f'detr : src-{src.shape} , mask-{mask.shape}')
         assert mask is not None
         hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
-        outputs_class = self.class_embed(hs)
-        outputs_coord = self.bbox_embed(hs).sigmoid()
+        outputs_class = self.class_embed(hs) #nn.Linear(hidden_dim, num_classes + 1)
+        outputs_coord = self.bbox_embed(hs).sigmoid() #MLP(hidden_dim, hidden_dim, 4, 3)
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
@@ -318,8 +319,10 @@ def build(args):
     device = torch.device(args.device)
 
     backbone = build_backbone(args)
+    # print (f'backbone :{backbone}')
 
     transformer = build_transformer(args)
+    # print (f'transformer :{transformer}')
 
     model = DETR(
         backbone,
@@ -328,6 +331,7 @@ def build(args):
         num_queries=args.num_queries,
         aux_loss=args.aux_loss,
     )
+    # print(f'DETR :{model}')
     if args.masks:
         model = DETRsegm(model, freeze_detr=(args.frozen_weights is not None))
     matcher = build_matcher(args)

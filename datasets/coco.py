@@ -24,6 +24,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         img, target = super(CocoDetection, self).__getitem__(idx)
         image_id = self.ids[idx]
         target = {'image_id': image_id, 'annotations': target}
+        print (f'coco_detect_load : {target}')
         img, target = self.prepare(img, target)
         if self._transforms is not None:
             img, target = self._transforms(img, target)
@@ -108,6 +109,7 @@ class ConvertCocoPolysToMask(object):
 
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])
+        print (f'coco_detect_retarget : {target}')
 
         return image, target
 
@@ -148,10 +150,16 @@ def build(image_set, args):
     root = Path(args.coco_path)
     assert root.exists(), f'provided COCO path {root} does not exist'
     mode = 'instances'
+    # PATHS = {
+    #     "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
+    #     "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
+    # }
+
     PATHS = {
-        "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
-        "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
+        "train": (root / "JPEGImages", root / f'train.json'),
+        "val": (root / "JPEGImages", root /  f'train.json'),
     }
+
 
     img_folder, ann_file = PATHS[image_set]
     dataset = CocoDetection(img_folder, ann_file, transforms=make_coco_transforms(image_set), return_masks=args.masks)
