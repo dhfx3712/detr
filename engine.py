@@ -66,6 +66,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 @torch.no_grad()
 def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir):
+    print (f'evaluate : postprocessors_key-{postprocessors.keys()} ')
     model.eval()
     criterion.eval()
 
@@ -85,7 +86,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             output_dir=os.path.join(output_dir, "panoptic_eval"),
         )
 
-    for samples, targets in metric_logger.log_every(data_loader, 10, header):
+    for samples, targets in metric_logger.log_every(data_loader, 1, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
@@ -148,4 +149,5 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         stats['PQ_all'] = panoptic_res["All"]
         stats['PQ_th'] = panoptic_res["Things"]
         stats['PQ_st'] = panoptic_res["Stuff"]
+    print (f'evaluate : metric_stats - {stats} , CocoEvaluator - {coco_evaluator}')
     return stats, coco_evaluator

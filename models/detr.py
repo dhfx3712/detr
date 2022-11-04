@@ -111,13 +111,18 @@ class SetCriterion(nn.Module):
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
         """
         assert 'pred_logits' in outputs
+        print (f'loss : keys-{outputs.keys()}  pred_logits {outputs["pred_logits"].shape} pred_boxes {outputs["pred_boxes"].shape} ')
         src_logits = outputs['pred_logits']
 
         idx = self._get_src_permutation_idx(indices)
+        print (f'loss_label idx : {idx}') #二维压缩数据
         target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
+        print (f'loss_label target_classes_o : {targets}')
         target_classes = torch.full(src_logits.shape[:2], self.num_classes,
-                                    dtype=torch.int64, device=src_logits.device)
+                                    dtype=torch.int64, device=src_logits.device) #torch.full填充
+        print (f'loss_label target_classes : {target_classes}')
         target_classes[idx] = target_classes_o
+        print (f'loss_label target_classes_final : {target_classes}')
 
         loss_ce = F.cross_entropy(src_logits.transpose(1, 2), target_classes, self.empty_weight)
         losses = {'loss_ce': loss_ce}
@@ -135,8 +140,10 @@ class SetCriterion(nn.Module):
         pred_logits = outputs['pred_logits']
         device = pred_logits.device
         tgt_lengths = torch.as_tensor([len(v["labels"]) for v in targets], device=device)
+        print (f'loss_cardinality_tgt : {tgt_lengths}')
         # Count the number of predictions that are NOT "no-object" (which is the last class)
         card_pred = (pred_logits.argmax(-1) != pred_logits.shape[-1] - 1).sum(1)
+        print (f'loss_cardinality_pred : {card_pred}, argmax-{pred_logits.argmax(-1)} ,!= {pred_logits.argmax(-1) != pred_logits.shape[-1]}')
         card_err = F.l1_loss(card_pred.float(), tgt_lengths.float())
         losses = {'cardinality_error': card_err}
         return losses
@@ -149,8 +156,9 @@ class SetCriterion(nn.Module):
         assert 'pred_boxes' in outputs
         idx = self._get_src_permutation_idx(indices)
         src_boxes = outputs['pred_boxes'][idx]
+        print(f'loss_boxex_pre : {src_boxes}')
         target_boxes = torch.cat([t['boxes'][i] for t, (_, i) in zip(targets, indices)], dim=0)
-
+        print (f'loss_boxex_tgt : {target_boxes}')
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction='none')
 
         losses = {}
@@ -231,7 +239,7 @@ class SetCriterion(nn.Module):
         if is_dist_avail_and_initialized():
             torch.distributed.all_reduce(num_boxes)
         num_boxes = torch.clamp(num_boxes / get_world_size(), min=1).item()
-
+        print (f'loss num_boxex : {num_boxes}')
         # Compute all the requested losses
         losses = {}
         for loss in self.losses:

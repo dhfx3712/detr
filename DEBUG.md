@@ -850,8 +850,91 @@ self.multihead_attn
 
 
 损失函数
-SetCriterion
+models/detr.py->SetCriterion()
+num_boxes = sum(len(t["labels"]) for t in targets)
+for loss in self.losses:
+    losses.update(self.get_loss(loss, outputs, targets, indices, num_boxes))
+            
+loss num_boxex : 3.0
+losses = ['labels', 'boxes', 'cardinality']
+SetCriterion 初始化三种类型的loss
 
+
+类别loss
+loss : keys-dict_keys(['pred_logits', 'pred_boxes'])  pred_logits torch.Size([2, 100, 92]) pred_boxes torch.Size([2, 100, 4]) 
+
+loss idx : (tensor([0, 1, 1]), tensor([71, 42, 71]))
+loss target_classes_o : [{'boxes': tensor([[0.5070, 0.5511, 0.3900, 0.5195]]), 'labels': tensor([0]), 'image_id': tensor([20180000001]), 'area': tensor([194670.2031]), 'iscrowd': tensor([0]), 'orig_size': tensor([333, 500]), 'size': tensor([ 800, 1201])}, 
+{'boxes': tensor([[0.4833, 0.3585, 0.1958, 0.3764],[0.5135, 0.5687, 0.6521, 0.7088]]), 'labels': tensor([1, 2]), 'image_id': tensor([20180000002]), 'area': tensor([ 62149.3242, 389719.4062]), 'iscrowd': tensor([0, 0]), 'orig_size': tensor([364, 480]), 'size': tensor([ 800, 1054])}]
+loss target_classes : tensor([[91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91],
+        [91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91]])
+loss target_classes_final : tensor([[91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,  0,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91],
+        [91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91,  1, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,  2,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91]])
+
+回归loss
+
+loss_boxex_pre : tensor([[0.5050, 0.5493, 0.3790, 0.5022],
+        [0.4739, 0.3542, 0.2007, 0.3737],
+        [0.5180, 0.5622, 0.6627, 0.6945]])
+loss_boxex_tgt : tensor([[0.5070, 0.5511, 0.3900, 0.5195],
+        [0.4833, 0.3585, 0.1958, 0.3764],
+        [0.5135, 0.5687, 0.6521, 0.7088]])
+
+
+
+候选loss
+
+loss_cardinality_tgt : tensor([1, 2])
+剔除no-object的统计
+loss_cardinality_pred : tensor([1, 2]), argmax-tensor([[91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,  8,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91],
+        [91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91,  1, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 19,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91, 91,
+         91, 91, 91, 91, 91, 91, 91, 91, 91, 91]]) ,!= tensor([[True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True],
+        [True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True, True, True, True, True, True, True, True, True,
+         True, True, True, True]])
 
 
 
@@ -863,3 +946,59 @@ PostProcess()
 
 
 PyCharm know that new_dict is a dictionary where keys are integers and values are lists by adding a # type: dict[int, list] inline comment:
+
+
+
+
+
+evaluate
+python main.py --batch_size 2 --no_aux_loss --eval --resume /Users/admin/Downloads/models/detr-r50-e632da11.pth --coco_path /Users/admin/data/VOCdevkit/VOC2007
+eval直接触发返回，不训练
+if args.eval:
+    test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,
+                                          data_loader_val, base_ds, device, args.output_dir)
+    if args.output_dir:
+        utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
+    return
+
+
+
+
+util/misc.py
+MetricLogger
+
+for obj in iterable:
+    data_time.update(time.time() - end)
+    #yield 返回metric_logger.log_every(data_loader, 10, header) val集batch返回
+    if i == 2:#配置val的迭代次数
+        break
+
+
+
+datasets/coco_eval.py
+CocoEvaluator
+
+
+
+
+Test: Total time: 0:00:21 (0.0174 s / it)
+Averaged stats: class_error: 71.43  loss: 1.8388 (2.5008)  loss_ce: 1.5515 (2.0502)  loss_bbox: 0.1486 (0.2585)  loss_giou: 0.1387 (0.1920)  loss_ce_unscaled: 1.5515 (2.0502)  class_error_unscaled: 66.6667 (69.0476)  loss_bbox_unscaled: 0.0297 (0.0517)  loss_giou_unscaled: 0.0694 (0.0960)  cardinality_error_unscaled: 0.0000 (2.2500)
+Accumulating evaluation results...
+DONE (t=0.02s).
+IoU metric: bbox
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.130
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.208
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.138
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.131
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.069
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.175
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.212
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.212
+evaluate : metric_stats - {'class_error': 69.04762268066406, 'loss': 2.5008145570755005, 'loss_ce': 2.050227701663971, 'loss_bbox': 0.25854504108428955, 'loss_giou': 0.19204190373420715, 'loss_ce_unscaled': 2.050227701663971, 'class_error_unscaled': 69.04762268066406, 'loss_bbox_unscaled': 0.051709006540477276, 'loss_giou_unscaled': 0.09602095186710358, 'cardinality_error_unscaled': 2.25, 'coco_eval_bbox': [0.13035007072135782, 0.2080091937765205, 0.13831918906176333, -1.0, -1.0, 0.13101308345120227, 0.06875, 0.175, 0.2125, -1.0, -1.0, 0.2125]} , CocoEvaluator - <datasets.coco_eval.CocoEvaluator object at 0x7fc6026d4dd0>
+
+
+

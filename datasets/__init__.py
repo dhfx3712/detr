@@ -10,8 +10,10 @@ def get_coco_api_from_dataset(dataset):
         # if isinstance(dataset, torchvision.datasets.CocoDetection):
         #     break
         if isinstance(dataset, torch.utils.data.Subset):
+            print (f'base_ds_subset : in')
             dataset = dataset.dataset
     if isinstance(dataset, torchvision.datasets.CocoDetection):
+        #self.coco = COCO(annFile)
         return dataset.coco
 
 

@@ -222,6 +222,9 @@ class MetricLogger(object):
         MB = 1024.0 * 1024.0
         for obj in iterable:
             data_time.update(time.time() - end)
+            #yield 返回metric_logger.log_every(data_loader, 10, header) val集batch返回
+            # if i == 2:
+            #     break
             yield obj
             iter_time.update(time.time() - end)
             if i % print_freq == 0 or i == len(iterable) - 1:
